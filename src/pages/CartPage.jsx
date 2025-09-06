@@ -1,33 +1,52 @@
-import React, { useState } from "react"
-import PreviousPurchases from "./PreviousPurchases"
+import React, { useEffect, useState } from "react";
+import PreviousPurchases from "./PreviousPurchases";
+import { getCart, removeFromCart } from "../api";
 
 export default function CartPage() {
-  const [cart, setCart] = useState([
-    { id: 1, title: "Eco-Friendly Bottle", price: 15.99, image: "/images/bottle.jpg", qty: 1 },
-    { id: 2, title: "Reusable Bag", price: 7.49, image: "/images/bag.jpg", qty: 2 },
-  ])
+  const [cart, setCart] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // 🔹 Example previous purchases
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  const fetchCart = async () => {
+    try {
+      setLoading(true);
+      const data = await getCart();
+      // Assuming backend returns { items: [{ product: {...}, quantity: X, id: Y }] }
+      setCart(data.items || []);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to fetch cart");
+      setLoading(false);
+    }
+  };
+
+  const handleRemove = async (productId) => {
+    try {
+      await removeFromCart(productId);
+      fetchCart(); // refresh
+    } catch (err) {
+      console.error(err);
+      alert("Failed to remove item");
+    }
+  };
+
+  const handleBuyAll = () => {
+    alert("Proceeding to checkout for all items 🛒");
+  };
+
+  const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0).toFixed(2);
+
+  // Example previous purchases (still local)
   const purchases = [
     { title: "Bamboo Toothbrush", purchasedAt: "2024-08-25T10:30:00Z", image: "/images/toothbrush.jpg" },
     { title: "Organic Cotton T-Shirt", purchasedAt: "2024-07-12T14:15:00Z", image: "/images/tshirt.jpg" },
-  ]
+  ];
 
-  function updateQuantity(id, change) {
-    setCart(cart.map(item =>
-      item.id === id ? { ...item, qty: Math.max(1, item.qty + change) } : item
-    ))
-  }
-
-  function handleRemove(id) {
-    setCart(cart.filter(item => item.id !== id))
-  }
-
-  function handleBuyAll() {
-    alert("Proceeding to checkout for all items 🛒")
-  }
-
-  const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0).toFixed(2)
+  if (loading) return <div>Loading cart...</div>;
 
   return (
     <div className="max-w-6xl mx-auto grid grid-cols-4 gap-6">
@@ -44,33 +63,23 @@ export default function CartPage() {
           <div className="text-gray-500">Your cart is empty.</div>
         ) : (
           <div className="space-y-4">
-            {cart.map(item => (
+            {cart.map((item) => (
               <div
                 key={item.id}
                 className="border rounded-xl p-4 flex items-center gap-4 shadow-sm bg-white"
               >
-                <img src={item.image} alt={item.title} className="w-24 h-24 object-cover rounded" />
+                <img
+                  src={item.product.image || "/images/default-product.jpg"}
+                  alt={item.product.title}
+                  className="w-24 h-24 object-cover rounded"
+                />
                 <div className="flex-1">
-                  <div className="font-semibold text-lg">{item.title}</div>
-                  <div className="text-gray-600">${item.price}</div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      onClick={() => updateQuantity(item.id, -1)}
-                      className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                    >
-                      –
-                    </button>
-                    <span className="px-3">{item.qty}</span>
-                    <button
-                      onClick={() => updateQuantity(item.id, 1)}
-                      className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <div className="font-semibold text-lg">{item.product.title}</div>
+                  <div className="text-gray-600">${item.product.price}</div>
+                  <div className="text-gray-500">Quantity: {item.quantity}</div>
                 </div>
                 <button
-                  onClick={() => handleRemove(item.id)}
+                  onClick={() => handleRemove(item.product_id)}
                   className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                 >
                   Remove
@@ -92,5 +101,5 @@ export default function CartPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
