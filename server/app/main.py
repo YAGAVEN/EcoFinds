@@ -1,8 +1,26 @@
 from fastapi import FastAPI
 from app.database import Base, engine
 from app.routers import users, products, categories, cart, orders
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="EcoFinds API")
+origins = [
+    "http://localhost",
+    "http://localhost:3000",  # React dev server default port
+    "http://127.0.0.1:3000",
+    # Add your frontend domain here in production
+]
+
+# from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # your frontend url
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.on_event("startup")
 def startup():
