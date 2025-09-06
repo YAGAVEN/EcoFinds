@@ -1,15 +1,46 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 export default function Profile({ auth }) {
-  const [username, setUsername] = useState(auth.user?.username || "")
-  const [email, setEmail] = useState(auth.user?.email || "")
+  const [username, setUsername] = useState("")
+  const [bio, setBio] = useState("")
+  const [avatar_url, setAvatar_url] = useState("")
   const [message, setMessage] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  function handleSave(e) {
+  useEffect(() => {
+    if (auth.user) {
+      setUsername(auth.user.username || "")
+      setBio(auth.user.bio || "")
+      setAvatar_url(auth.user.avatar_url || "")
+    }
+  }, [auth.user])
+
+  async function handleSave(e) {
     e.preventDefault()
-    // Call API here to update profile
-    // Example: await api.updateProfile({ username, email })
-    setMessage("Profile updated successfully ✅")
+    setLoading(true)
+    setMessage("")
+
+    try {
+      console.log("Updating profile with:", { username, bio, avatar_url })
+      const result = await auth.updateProfile({
+        username,
+        bio,
+        avatar_url
+      })
+
+      console.log("Profile update result:", result)
+
+      if (result.ok) {
+        setMessage("Profile updated successfully ✅")
+      } else {
+        setMessage("Error: " + result.error)
+      }
+    } catch (error) {
+      console.error("Profile update error:", error)
+      setMessage("Error updating profile: " + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -23,24 +54,37 @@ export default function Profile({ auth }) {
             value={username} 
             onChange={(e) => setUsername(e.target.value)}
             className="w-full border rounded px-3 py-2"
+            required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)}
+          <label className="block text-sm font-medium mb-1">Bio</label>
+          <textarea 
+            value={bio} 
+            onChange={(e) => setBio(e.target.value)}
             className="w-full border rounded px-3 py-2"
+            rows={3}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Avatar URL</label>
+          <input 
+            type="url" 
+            value={avatar_url} 
+            onChange={(e) => setAvatar_url(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+            placeholder="https://example.com/avatar.jpg"
           />
         </div>
 
         <button 
           type="submit" 
-          className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700"
+          disabled={loading}
+          className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 disabled:opacity-50"
         >
-          Save
+          {loading ? 'Saving...' : 'Save'}
         </button>
       </form>
 

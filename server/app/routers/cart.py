@@ -17,7 +17,25 @@ def get_cart(db: Session = Depends(get_db), current_user: User = Depends(get_cur
         db.add(cart)
         db.commit()
         db.refresh(cart)
-    return cart
+    
+    # Get cart items with product details
+    cart_items = db.query(CartItem).filter(CartItem.cart_id == cart.cart_id).all()
+    
+    # Create response with cart_items including product details
+    cart_items_with_products = []
+    for item in cart_items:
+        product = db.query(Product).filter(Product.product_id == item.product_id).first()
+        cart_items_with_products.append({
+            "cart_item_id": item.cart_item_id,
+            "product_id": item.product_id,
+            "quantity": item.quantity,
+            "product": product
+        })
+    
+    return {
+        "cart_id": cart.cart_id,
+        "cart_items": cart_items_with_products
+    }
 
 @router.post("/add/{product_id}")
 def add_to_cart(product_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
