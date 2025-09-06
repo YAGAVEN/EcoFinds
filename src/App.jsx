@@ -14,10 +14,23 @@ import PreviousPurchases from './pages/PreviousPurchases'
 
 import useAuth from './hooks/useAuth'
 
-export default function App(){
+// 🔔 Toastify imports
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
+export default function App() {
   const auth = useAuth()
   const navigate = useNavigate()
-  function handleLogout(){ auth.logout?.(); navigate('/'); }
+
+  function handleLogout() {
+    auth.logout?.()
+    navigate('/')
+    // 👇 show notification instead of blocking alert
+    toast.success('Logged out successfully!')
+  }
+
+  // 👇 replace alert globally → auto notification
+  window.alert = (msg) => toast.info(msg)
 
   if (auth.loading) {
     return (
@@ -46,6 +59,17 @@ export default function App(){
         </Routes>
       </main>
       <Footer />
+
+      {/* 🔔 Toast Container must be included */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </div>
   )
 }

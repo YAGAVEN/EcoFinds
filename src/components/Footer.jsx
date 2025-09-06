@@ -6,6 +6,7 @@ export default function Footer(){
       <div className="max-w-6xl mx-auto px-4 flex justify-between">
         <div>© {new Date().getFullYear()} EcoFinds</div>
         <div>Built for sustainable shopping</div>
+        <p>Created By Team Galacticos</p>
       </div>
     </footer>
   )

@@ -23,7 +23,11 @@ export default function Header({ user, onLogout }) {
   return (
     <header className="bg-emerald-600 text-white px-4 py-3 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">EF</div>
+        <img
+          src="/logo.jpg"
+          alt="EcoFinds Logo"
+          className="w-8 h-8 rounded-full object-cover"
+        />
         <div className="font-semibold text-lg">EcoFinds</div>
       </Link>
 
