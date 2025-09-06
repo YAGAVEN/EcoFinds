@@ -5,254 +5,148 @@ export default function AddProduct() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { product: editProduct, my, setMy } = location.state || {};
+  const { product: editProduct } = location.state || {};
 
   const [form, setForm] = useState({
     title: "",
-    category: "",
     description: "",
+    category_id: "",
     price: "",
-    quantity: "",
-    condition: "",
-    year: "",
-    brand: "",
-    model: "",
-    dimensions: "",
-    weight: "",
-    material: "",
-    color: "",
-    originalPacking: false,
-    manualInstructions: false,
-    workingCondition: "",
-    imageUrl: "", // NEW FIELD
+    image_url: "",
+    status: "active",
   });
 
-  // Prefill form if editing
+  const [categories, setCategories] = useState([]);
+
   useEffect(() => {
     if (editProduct) {
       setForm(editProduct);
     }
   }, [editProduct]);
 
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const response = await fetch("http://localhost:8000/categories/");
+        if (!response.ok) throw new Error("Failed to fetch categories");
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setForm({
       ...form,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (editProduct) {
-      // Update existing product
-      const updated = my.map((p) => (p.id === editProduct.id ? form : p));
-      setMy(updated);
-      alert("Product updated successfully!");
-    } else {
-      // Add new product
-      const newProduct = { ...form, id: Date.now() };
-      setMy([...my, newProduct]);
-      alert("Product added successfully!");
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      alert("Please log in to add or update products.");
+      return;
     }
 
-    navigate("/my-listings");
+    try {
+      const response = await fetch(
+        editProduct
+          ? `http://localhost:8000/products/${editProduct.product_id}`
+          : "http://localhost:8000/products/",
+        {
+          method: editProduct ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(form),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(`Error: ${error.detail || "Failed to save product."}`);
+        return;
+      }
+
+      alert(editProduct ? "Product updated successfully!" : "Product added successfully!");
+      navigate("/my-listings");
+    } catch (error) {
+      alert("Network or server error: " + error.message);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center p-6">
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-2xl">
-        <h2 className="text-2xl font-bold mb-6">
-          {editProduct ? "Edit Product" : "Add a New Product"}
-        </h2>
+        <h2 className="text-2xl font-bold mb-6">{editProduct ? "Edit Product" : "Add Product"}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Product Title */}
           <input
             type="text"
             name="title"
             value={form.title}
             onChange={handleChange}
-            placeholder="Product Title"
+            placeholder="Product title"
             className="w-full p-2 border rounded-lg"
             required
           />
-
-          {/* Category Dropdown */}
-          <select
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className="w-full p-2 border rounded-lg"
-            required
-          >
-            <option value="">Select Category</option>
-            <option value="Music">Music</option>
-            <option value="Clothing">Clothing</option>
-            <option value="Books">Books</option>
-            <option value="Misc">Misc</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Furniture">Furniture</option>
-          </select>
-
-          {/* Product Description */}
           <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
-            placeholder="Product Description"
+            placeholder="Product description"
             className="w-full p-2 border rounded-lg"
-            rows="3"
+            rows={4}
+          />
+          <select
+            name="category_id"
+            value={form.category_id}
+            onChange={handleChange}
+            className="w-full p-2 border rounded-lg"
+            required
+          >
+            <option value="">Select a category</option>
+            {categories.map((category) => (
+              <option key={category.category_id} value={category.category_id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="number"
+            step="0.01"
+            name="price"
+            value={form.price}
+            onChange={handleChange}
+            placeholder="Price"
+            className="w-full p-2 border rounded-lg"
             required
           />
-
-          {/* Price & Quantity */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="number"
-              name="price"
-              value={form.price}
-              onChange={handleChange}
-              placeholder="Price"
-              className="w-full p-2 border rounded-lg"
-              required
-            />
-            <input
-              type="number"
-              name="quantity"
-              value={form.quantity}
-              onChange={handleChange}
-              placeholder="Quantity"
-              className="w-full p-2 border rounded-lg"
-              required
-            />
-          </div>
-
-          {/* Condition & Year */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              name="condition"
-              value={form.condition}
-              onChange={handleChange}
-              placeholder="Condition"
-              className="w-full p-2 border rounded-lg"
-              required
-            />
-            <input
-              type="number"
-              name="year"
-              value={form.year}
-              onChange={handleChange}
-              placeholder="Year of Manufacture"
-              className="w-full p-2 border rounded-lg"
-              required
-            />
-          </div>
-
-          {/* Brand & Model */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              name="brand"
-              value={form.brand}
-              onChange={handleChange}
-              placeholder="Brand"
-              className="w-full p-2 border rounded-lg"
-            />
-            <input
-              type="text"
-              name="model"
-              value={form.model}
-              onChange={handleChange}
-              placeholder="Model"
-              className="w-full p-2 border rounded-lg"
-            />
-          </div>
-
-          {/* Dimensions & Weight */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              name="dimensions"
-              value={form.dimensions}
-              onChange={handleChange}
-              placeholder="Dimensions (L x W x H)"
-              className="w-full p-2 border rounded-lg"
-            />
-            <input
-              type="text"
-              name="weight"
-              value={form.weight}
-              onChange={handleChange}
-              placeholder="Weight"
-              className="w-full p-2 border rounded-lg"
-            />
-          </div>
-
-          {/* Material & Color */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              name="material"
-              value={form.material}
-              onChange={handleChange}
-              placeholder="Material"
-              className="w-full p-2 border rounded-lg"
-            />
-            <input
-              type="text"
-              name="color"
-              value={form.color}
-              onChange={handleChange}
-              placeholder="Color"
-              className="w-full p-2 border rounded-lg"
-            />
-          </div>
-
-          {/* Image URL */}
           <input
             type="text"
-            name="imageUrl"
-            value={form.imageUrl}
+            name="image_url"
+            value={form.image_url}
             onChange={handleChange}
-            placeholder="Product Image URL"
+            placeholder="Image URL"
             className="w-full p-2 border rounded-lg"
           />
-
-          {/* Boolean Checkboxes */}
-          <div className="flex items-center space-x-4">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name="originalPacking"
-                checked={form.originalPacking}
-                onChange={handleChange}
-              />
-              <span>Original Packing</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name="manualInstructions"
-                checked={form.manualInstructions}
-                onChange={handleChange}
-              />
-              <span>Manual Instructions</span>
-            </label>
-          </div>
-
-          {/* Working Condition */}
-          <textarea
-            name="workingCondition"
-            value={form.workingCondition}
+          <select
+            name="status"
+            value={form.status}
             onChange={handleChange}
-            placeholder="Working Condition Description"
             className="w-full p-2 border rounded-lg"
-            rows="3"
-          />
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"

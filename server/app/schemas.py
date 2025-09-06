@@ -75,13 +75,14 @@ class CartItemBase(BaseModel):
 
 class CartItemOut(CartItemBase):
     cart_item_id: int
+    product: Optional[ProductOut] = None
 
     class Config:
         orm_mode = True
 
 class CartOut(BaseModel):
     cart_id: int
-    items: List[CartItemOut] = []
+    cart_items: List[CartItemOut] = []
 
     class Config:
         orm_mode = True
