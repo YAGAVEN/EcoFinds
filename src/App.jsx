@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
@@ -21,9 +20,9 @@ export default function App(){
   function handleLogout(){ auth.logout?.(); navigate('/'); }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Header user={auth.user} onLogout={handleLogout} />
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="flex-grow max-w-6xl mx-auto px-4 py-6">
         <Routes>
           <Route path="/" element={<BrowsePage />} />
           <Route path="/auth" element={<AuthPage auth={auth} />} />
